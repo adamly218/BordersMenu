@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icon/icon.png" width="128" alt="Borders Menu icon">
+</p>
+
 # Borders Menu
 
 A small macOS menu bar app for changing [JankyBorders](https://github.com/FelixKratz/JankyBorders) settings without editing its config file.
