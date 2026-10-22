@@ -28,6 +28,7 @@ Pick a border color, width and corner style from the menu bar. Each change shows
 - **Restart Borders**: brings borders back when they disappear (see [Known issues](#known-issues)).
 - **Open Config File**: opens `bordersrc` in TextEdit.
 - **Open Menu at Login**: starts Borders Menu when you log in.
+- **Hide Menu Bar Icon**: removes the icon while the borders keep working. Open Borders Menu again from Applications, Spotlight or Launchpad to bring it back. A hidden icon stays hidden when the app starts at login.
 
 Borders Menu writes the config file and passes the settings to the running `borders` process, which draws the borders. Opening Borders Menu starts the JankyBorders service, and **Quit** stops it, so the borders go away with the menu. With **Open Menu at Login** on, the borders come back each time you log in.
 

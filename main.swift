@@ -128,6 +128,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var config = Config.load()
     var pendingColor: DispatchWorkItem?
     var isDemo = false
+    var launchedAtLogin = false
+    let iconHiddenKey = "iconHidden"
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        let event = NSAppleEventManager.shared().currentAppleEvent
+        launchedAtLogin = event?.eventID == kAEOpenApplication
+            && event?.paramDescriptor(forKeyword: keyAEPropData)?.enumCodeValue == keyAELaunchedAsLogInItem
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if let index = CommandLine.arguments.firstIndex(of: "--demo"),
@@ -146,6 +154,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let menu = NSMenu()
         menu.delegate = self
         statusItem.menu = menu
+
+        // A hidden icon stays hidden when the app starts at login.
+        // Opening the app yourself always brings it back.
+        if !launchedAtLogin { UserDefaults.standard.set(false, forKey: iconHiddenKey) }
+        statusItem.isVisible = !UserDefaults.standard.bool(forKey: iconHiddenKey)
+    }
+
+    // Opening the app again while it runs (Finder, Spotlight, Launchpad) shows the icon.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !isDemo { setIconHidden(false) }
+        return false
+    }
+
+    func setIconHidden(_ hidden: Bool) {
+        UserDefaults.standard.set(hidden, forKey: iconHiddenKey)
+        statusItem.isVisible = !hidden
     }
 
     // Stop the borders before quitting; brew takes a moment, so finish the quit afterwards.
@@ -270,6 +294,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let login = item("Open Menu at Login", #selector(toggleLogin))
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)
+        menu.addItem(item("Hide Menu Bar Icon", #selector(hideIcon)))
         menu.addItem(.separator())
         menu.addItem(item("Quit", #selector(NSApplication.terminate(_:)), target: NSApp))
     }
@@ -370,6 +395,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSWorkspace.shared.open(
             [configURL], withApplicationAt: URL(fileURLWithPath: "/System/Applications/TextEdit.app"),
             configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    @objc func hideIcon() {
+        let alert = NSAlert()
+        alert.messageText = "Hide the menu bar icon?"
+        alert.informativeText = "Borders keep working. To bring the icon back, open Borders Menu "
+            + "again from Applications, Spotlight or Launchpad."
+        alert.addButton(withTitle: "Hide Icon")
+        alert.addButton(withTitle: "Cancel")
+        NSApp.activate(ignoringOtherApps: true)
+        if alert.runModal() == .alertFirstButtonReturn { setIconHidden(true) }
     }
 
     @objc func toggleLogin() {
