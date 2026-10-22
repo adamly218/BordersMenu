@@ -58,7 +58,12 @@ shoot() {
     wait "$pid" 2>/dev/null || true
 }
 
-shoot menu menu.png
-shoot colors colors.png
-shoot window border.png
+# The first capture after a rebuild sometimes fails, so try each shot up to three times.
+for shot in "menu menu.png" "colors colors.png" "window border.png"; do
+    for attempt in 1 2 3; do
+        # shellcheck disable=SC2086
+        shoot $shot && break
+        [ "$attempt" = 3 ] && { echo "Failed: $shot" >&2; exit 1; }
+    done
+done
 echo "Saved to $OUT"

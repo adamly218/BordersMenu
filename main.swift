@@ -127,12 +127,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem!
     var config = Config.load()
     var pendingColor: DispatchWorkItem?
+    var isDemo = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if let index = CommandLine.arguments.firstIndex(of: "--demo"),
            index + 1 < CommandLine.arguments.count {
+            isDemo = true
             demo(CommandLine.arguments[index + 1])
             return
+        }
+        // The menu owns the borders: opening it turns them on, quitting turns them off.
+        DispatchQueue.global().async {
+            if !bordersRunning() { run(brew, ["services", "start", "borders"]) }
         }
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = NSImage(
@@ -140,6 +146,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let menu = NSMenu()
         menu.delegate = self
         statusItem.menu = menu
+    }
+
+    // Stop the borders before quitting; brew takes a moment, so finish the quit afterwards.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        if isDemo { return .terminateNow }
+        DispatchQueue.global().async {
+            run(brew, ["services", "stop", "borders"])
+            DispatchQueue.main.async { NSApp.reply(toApplicationShouldTerminate: true) }
+        }
+        return .terminateLater
     }
 
     // Screenshot mode (`BordersMenu --demo menu|colors|window`): shows the menu or a sample
@@ -255,7 +271,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)
         menu.addItem(.separator())
-        menu.addItem(item("Quit Menu", #selector(NSApplication.terminate(_:)), target: NSApp))
+        menu.addItem(item("Quit", #selector(NSApplication.terminate(_:)), target: NSApp))
     }
 
     private func colorMenu() -> NSMenu {

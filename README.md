@@ -29,7 +29,7 @@ Pick a border color, width and corner style from the menu bar. Each change shows
 - **Open Config File**: opens `bordersrc` in TextEdit.
 - **Open Menu at Login**: starts Borders Menu when you log in.
 
-Borders Menu only writes the config file and passes the settings to the running `borders` process. JankyBorders keeps drawing the borders. Quitting the menu doesn't stop them.
+Borders Menu writes the config file and passes the settings to the running `borders` process, which draws the borders. Opening Borders Menu starts the JankyBorders service, and **Quit** stops it, so the borders go away with the menu. With **Open Menu at Login** on, the borders come back each time you log in.
 
 ## Requirements
 
